@@ -1,7 +1,9 @@
 import yfinance as yf
 import pandas as pd
-from sklearn.datasets import make_classification
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
+
 SMP_500_LIST = ["A", "AAPL", "ABBV", "ABNB", "ABT", "ACGL", "ACN", "ADBE", "ADI",
                 "ADM", "ADP", "ADSK", "AEE", "AEP", "AES", "AFL", "AIG", "AIZ", "AJG",
                 "AKAM", "ALB", "ALGN", "ALL", "ALLE", "AMAT", "AMCR", "AMD", "AME",
@@ -59,7 +61,6 @@ PLAN:
 Steps:
 1. Gather raw Ticker data from yfinance.
 2. Clean data to just financial data.
-3. Gather around 1000 Tickers. With about 10 Year data for each.
 4. Before we make our final cleaned data, need to clean out all the unneeded variables-
 4a. Get a smaller sample (of around 100 Tickers for 1 year).
 5. Run Random Forests on raw Ticker data, until most impactful variables are determined.
@@ -67,8 +68,22 @@ Steps:
 7. Push the cleaned dataset into a ML model and allow it to generate predictions, the final result being a weight
 8. The final result should be A) AI recommendation (buy/sell/hold) and it's confidence / expected profit.
 """
-class TickerData:
-    def __init__(self):
+def load_tickers():
+    all_ticker_data = []
+    i = 0
+    for tag in SMP_500_LIST:
+        i+=1
+        if i > 20:
+            break
+        print(tag, " we are at: " + str(SMP_500_LIST.index(tag)) + "/" + str(len(SMP_500_LIST)))
+        ticker_df = pd.DataFrame([yf.Ticker(tag).info]).apply(pd.to_numeric, errors="coerce").dropna(axis=1)
+        all_ticker_data.append(ticker_df)
+    mass_ticker_df = pd.concat(all_ticker_data).dropna(axis=1)
 
-        pass
+    cluster_labels = KMeans(n_clusters=10, random_state=42).fit_predict(mass_ticker_df)
+    mass_ticker_df["labels"] = cluster_labels
+    print(mass_ticker_df)
+
+if __name__ == "__main__":
+    load_tickers()
 
